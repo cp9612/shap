@@ -288,7 +288,7 @@ class KernelExplainer(Explainer):
             # if we have enough samples to enumerate all subsets then ignore the unneeded samples
             self.max_samples = 2 ** 30
             if self.M <= 30:
-                self.max_samples = 2 ** self.M - 2 # For 3 features, 2**3-2 = 6
+                self.max_samples = 2 ** self.M - 2 # For 3 features, 2**3-2 = 6 (except universal and empty)
                 if self.nsamples > self.max_samples:
                     self.nsamples = self.max_samples
             # For 3 features, nsamples = 6, max_samples = 6
@@ -300,7 +300,7 @@ class KernelExplainer(Explainer):
             num_paired_subset_sizes = np.int(np.floor((self.M - 1) / 2.0))
             weight_vector = np.array([(self.M - 1.0) / (i * (self.M - i)) for i in range(1, num_subset_sizes + 1)])
             weight_vector[:num_paired_subset_sizes] *= 2
-            weight_vector /= np.sum(weight_vector)
+            weight_vector /= np.sum(weight_vector) # For 3 features, weight_vector = [1]
             log.debug("weight_vector = {0}".format(weight_vector))
             log.debug("num_subset_sizes = {0}".format(num_subset_sizes))
             log.debug("num_paired_subset_sizes = {0}".format(num_paired_subset_sizes))
@@ -316,8 +316,8 @@ class KernelExplainer(Explainer):
             for subset_size in range(1, num_subset_sizes + 1):
 
                 # determine how many subsets (and their complements) are of the current size
-                nsubsets = binom(self.M, subset_size)
-                if subset_size <= num_paired_subset_sizes: nsubsets *= 2
+                nsubsets = binom(self.M, subset_size) # For 3 features, nsubsets = 3
+                if subset_size <= num_paired_subset_sizes: nsubsets *= 2 # For 3 features, nsubsets = 3*2 = 6
                 log.debug("subset_size = {0}".format(subset_size))
                 log.debug("nsubsets = {0}".format(nsubsets))
                 log.debug("self.nsamples*weight_vector[subset_size-1] = {0}".format(
@@ -337,12 +337,13 @@ class KernelExplainer(Explainer):
                     # add all the samples of the current subset size
                     w = weight_vector[subset_size - 1] / binom(self.M, subset_size)
                     if subset_size <= num_paired_subset_sizes: w /= 2.0
+                    # For 3 features, w = 0.166666
                     for inds in itertools.combinations(group_inds, subset_size):
                         mask[:] = 0.0
-                        mask[np.array(inds, dtype='int64')] = 1.0
+                        mask[np.array(inds, dtype='int64')] = 1.0  # [1,0,0], [0,1,0], [0,0,1]
                         self.addsample(instance.x, mask, w)
                         if subset_size <= num_paired_subset_sizes:
-                            mask[:] = np.abs(mask - 1)
+                            mask[:] = np.abs(mask - 1)             # [0,1,1], [1,0,1], [1,1,0]
                             self.addsample(instance.x, mask, w)
                 else:
                     break
