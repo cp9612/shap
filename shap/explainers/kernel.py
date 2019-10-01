@@ -288,10 +288,10 @@ class KernelExplainer(Explainer):
             # if we have enough samples to enumerate all subsets then ignore the unneeded samples
             self.max_samples = 2 ** 30
             if self.M <= 30:
-                self.max_samples = 2 ** self.M - 2
+                self.max_samples = 2 ** self.M - 2 # For 3 features, 2**3-2 = 6
                 if self.nsamples > self.max_samples:
                     self.nsamples = self.max_samples
-
+            # For 3 features, nsamples = 6, max_samples = 6
             # reserve space for some of our computations
             self.allocate()
 
@@ -484,12 +484,13 @@ class KernelExplainer(Explainer):
                 new_indices = np.tile(indices, self.nsamples)
                 self.synth_data = sp.sparse.csr_matrix((new_data, new_indices, new_indptr), shape=shape).tolil()
         else:
-            self.synth_data = np.tile(self.data.data, (self.nsamples, 1))
+            self.synth_data = np.tile(self.data.data, (self.nsamples, 1)) # synth_data.shape = (data.data.shape[0]*nsamples,
+                                                                          #                     data.data.shape[1],data.data.shape[2], ...)
 
         self.maskMatrix = np.zeros((self.nsamples, self.M))
         self.kernelWeights = np.zeros(self.nsamples)
-        self.y = np.zeros((self.nsamples * self.N, self.D))
-        self.ey = np.zeros((self.nsamples, self.D))
+        self.y = np.zeros((self.nsamples * self.N, self.D)) # (n_samples*self.data.data.shape[0],num_classes)
+        self.ey = np.zeros((self.nsamples, self.D)) # expected
         self.lastMask = np.zeros(self.nsamples)
         self.nsamplesAdded = 0
         self.nsamplesRun = 0
