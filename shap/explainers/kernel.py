@@ -209,11 +209,13 @@ class KernelExplainer(Explainer):
                 if self.keep_index:
                     data = convert_to_instance_with_index(data, column_name, index_value[i:i + 1], index_name)
                 explanations.append(self.explain(data, **kwargs))
-
+            
+            # len(explanations) = X.shape[0], num_instances
+            # explanations.shape = (num_features,num_classes)
             # vector-output
             s = explanations[0].shape
             if len(s) == 2:
-                outs = [np.zeros((X.shape[0], s[0])) for j in range(s[1])]
+                outs = [np.zeros((X.shape[0], s[0])) for j in range(s[1])] # len(outs) = num_classes, outs[0].shape = (num_instances,num_features)
                 for i in range(X.shape[0]):
                     for j in range(s[1]):
                         outs[j][i] = explanations[i][:, j]
@@ -233,12 +235,12 @@ class KernelExplainer(Explainer):
 
         # find the feature groups we will test. If a feature does not change from its
         # current value then we know it doesn't impact the model
-        self.varyingInds = self.varying_groups(instance.x)
-        if self.data.groups is None:
-            self.varyingFeatureGroups = np.array([i for i in self.varyingInds])
+        self.varyingInds = self.varying_groups(instance.x) # [feature1,feature2,feature3, ...]
+        if self.data.groups is None:                       # [array([feature1]),array([feature2]), ...]
+            self.varyingFeatureGroups = np.array([i for i in self.varyingInds]) 
             self.M = self.varyingFeatureGroups.shape[0]
         else:
-            self.varyingFeatureGroups = [self.data.groups[i] for i in self.varyingInds]
+            self.varyingFeatureGroups = [self.data.groups[i] for i in self.varyingInds] # [feature1,feature2,feature3, ...]
             self.M = len(self.varyingFeatureGroups)
             groups = self.data.groups
             # convert to numpy array as it is much faster if not jagged array (all groups of same length)
@@ -260,6 +262,7 @@ class KernelExplainer(Explainer):
         if not self.vector_out:
             self.fx = np.array([self.fx])
 
+        # self.M = num_features
         # if no features vary then no feature has an effect
         if self.M == 0:
             phi = np.zeros((self.data.groups_size, self.D))
