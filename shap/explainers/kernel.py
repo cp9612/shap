@@ -498,17 +498,17 @@ class KernelExplainer(Explainer):
         if self.keep_index:
             self.synth_data_index = np.tile(self.data.index_value, self.nsamples)
 
-    def addsample(self, x, m, w):
+    def addsample(self, x, m, w): # x.shape = (1, num_features, 28, 28)
         offset = self.nsamplesAdded * self.N
-        if isinstance(self.varyingFeatureGroups, (list,)):
-            for j in range(self.M):
-                for k in self.varyingFeatureGroups[j]:
+        if isinstance(self.varyingFeatureGroups, (list,)): # False [0,1,2]
+            for j in range(self.M): # feature index
+                for k in self.varyingFeatureGroups[j]: # feature index
                     if m[j] == 1.0:
                         self.synth_data[offset:offset+self.N, k] = x[0, k]
         else:
             # for non-jagged numpy array we can significantly boost performance
-            mask = m == 1.0
-            groups = self.varyingFeatureGroups[mask]
+            mask = m == 1.0                          # [True False False], [False True True], ...
+            groups = self.varyingFeatureGroups[mask] #         [0],               [1 2], ...
             if len(groups.shape) == 2:
                 for group in groups:
                     self.synth_data[offset:offset+self.N, group] = x[0, group]
