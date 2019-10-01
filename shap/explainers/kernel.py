@@ -94,7 +94,7 @@ class KernelExplainer(Explainer):
         self.keep_index = kwargs.get("keep_index", False)
         self.keep_index_ordered = kwargs.get("keep_index_ordered", False)
         self.data = convert_to_data(data, keep_index=self.keep_index)
-        model_null = match_model_to_data(self.model, self.data)
+        model_null = match_model_to_data(self.model, self.data) # shape = (data.shape[0],num_classes)
 
         # enforce our current input type limitations
         assert isinstance(self.data, DenseData) or isinstance(self.data, SparseData), \
@@ -117,8 +117,8 @@ class KernelExplainer(Explainer):
         # find E_x[f(x)]
         if isinstance(model_null, (pd.DataFrame, pd.Series)):
             model_null = np.squeeze(model_null.values)
-        self.fnull = np.sum((model_null.T * self.data.weights).T, 0)
-        self.expected_value = self.linkfv(self.fnull)
+        self.fnull = np.sum((model_null.T * self.data.weights).T, 0) # shape = (num_classes,)
+        self.expected_value = self.linkfv(self.fnull) # len = num_classes
         
         # see if we have a vector output
         self.vector_out = True
@@ -128,7 +128,7 @@ class KernelExplainer(Explainer):
             self.D = 1
             self.expected_value = float(self.expected_value)
         else:
-            self.D = self.fnull.shape[0]
+            self.D = self.fnull.shape[0] # num_classes
         
 
     def shap_values(self, X, **kwargs):
