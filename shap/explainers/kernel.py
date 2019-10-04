@@ -208,10 +208,11 @@ class KernelExplainer(Explainer):
                 data = X[i:i + 1, :]
                 if self.keep_index:
                     data = convert_to_instance_with_index(data, column_name, index_value[i:i + 1], index_name)
-                explanations.append(self.explain(data, **kwargs))
+                explanations.append(self.explain(data, **kwargs)) # phi.shape = (num_features, num_classes)
             
             # len(explanations) = X.shape[0], num_instances
-            # explanations.shape = (num_features,num_classes)
+            # explanations.shape = (num_features, num_classes)
+            # formatting
             # vector-output
             s = explanations[0].shape
             if len(s) == 2:
@@ -405,7 +406,7 @@ class KernelExplainer(Explainer):
             self.run()
 
             # solve then expand the feature importance (Shapley value) vector to contain the non-varying features
-            phi = np.zeros((self.data.groups_size, self.D))
+            phi = np.zeros((self.data.groups_size, self.D)) # phi.shape = (num_features, num_classes)
             phi_var = np.zeros((self.data.groups_size, self.D))
             for d in range(self.D):
                 vphi, vphi_var = self.solve(self.nsamples / self.max_samples, d)
