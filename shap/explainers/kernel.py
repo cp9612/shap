@@ -341,10 +341,10 @@ class KernelExplainer(Explainer):
                     for inds in itertools.combinations(group_inds, subset_size):
                         mask[:] = 0.0
                         mask[np.array(inds, dtype='int64')] = 1.0  # [1,0,0], [0,1,0], [0,0,1]
-                        self.addsample(instance.x, mask, w)
+                        self.addsample(instance.x, mask, w)        # Generate permutation 
                         if subset_size <= num_paired_subset_sizes:
                             mask[:] = np.abs(mask - 1)             # [0,1,1], [1,0,1], [1,1,0]
-                            self.addsample(instance.x, mask, w)
+                            self.addsample(instance.x, mask, w)    # Generate permutation
                 else:
                     break
             log.info("num_full_subsets = {0}".format(num_full_subsets))
@@ -491,6 +491,7 @@ class KernelExplainer(Explainer):
         self.maskMatrix = np.zeros((self.nsamples, self.M))
         self.kernelWeights = np.zeros(self.nsamples)
         self.y = np.zeros((self.nsamples * self.N, self.D)) # (n_samples*self.data.data.shape[0],num_classes)
+                                                            # (6*500,num_classes)
         self.ey = np.zeros((self.nsamples, self.D)) # expected
         self.lastMask = np.zeros(self.nsamples)
         self.nsamplesAdded = 0
